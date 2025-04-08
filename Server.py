@@ -6,63 +6,53 @@ from dframe import *
 
 lock = threading.Lock()
 
-
 def client_thread(connection):
-    try:
-        data = connection.recv(1024).decode().strip()  # Step 1
-        log = data.split(' ')
 
-        # Ensure the data is valid
-        if len(log) != 2 or not log[0].isdigit():
-            print(f"[ERROR] Invalid login format received: '{data}'")
-            connection.send("InvalidVoter".encode())
-            connection.close()
-            return
+    data = connection.recv(1024)     #receiving voter details            #2
+    log = data.decode().strip().split(' ')
 
-        log[0] = int(log[0])  # Now safe to convert
-
-        if df.verify(log[0], log[1]):
-            if df.isEligible(log[0]):
-                print('Voter Logged in... ID:' + str(log[0]))
-                print(f"[LOGIN RECEIVED] {log}")
-                print(f"[VERIFY] {df.verify(log[0], log[1])}, [Eligible] {df.isEligible(log[0])}")
-                connection.send("Authenticate".encode())  # Step 2: tell client login success
-            else:
-                print('Vote Already Cast by ID:' + str(log[0]))
-                connection.send("VoteCasted".encode())  # Step 2: inform already voted
-                connection.close()
-                return
-        else:
-            print('Invalid Voter')
-            connection.send("InvalidVoter".encode())  # Step 2: inform invalid
-            connection.close()
-            return
-
-        # --- Wait for client to vote only AFTER successful login ---
-        data = connection.recv(1024)  # Step 3: client sends vote ONLY after pressing button
-        print("Vote Received from ID: " + str(log[0]) + "  Processing...")
-
-        lock.acquire()
-        if df.vote_update(data.decode(), log[0]):
-            print("Vote Casted Successfully by voter ID = " + str(log[0]))
-            connection.send("Successful".encode())
-        else:
-            print("Vote Update Failed by voter ID = " + str(log[0]))
-            connection.send("Vote Update Failed".encode())
-        lock.release()
+    if len(log) >= 1 and log[0].isdigit():
+        log[0] = int(log[0])
+    # continue processing...
+    else:
+        print("Invalid input received from client:", log)
+        connection.send(str.encode("Invalid input. Vote not counted.\n"))
         connection.close()
+       
+        return
 
-    except Exception as e:
-        print(f"[ERROR] {e}")
-        connection.send("Server Error".encode())
-        connection.close()
+    if(df.verify(log[0],log[1])):                                #3 Authenticate
+        if(df.isEligible(log[0])):
+            print('Voter Logged in... ID:'+str(log[0]))
+            connection.send("Authenticate".encode())
+        else:
+            print('Vote Already Cast by ID:'+str(log[0]))
+            connection.send("VoteCasted".encode())
+    else:
+        print('Invalid Voter')
+        connection.send("InvalidVoter".encode())
 
+
+    data = connection.recv(1024)                                    #4 Get Vote
+    print("Vote Received from ID: "+str(log[0])+"  Processing...")
+    lock.acquire()
+    #update Database
+    if(df.vote_update(data.decode(),log[0])):
+        print("Vote Casted Sucessfully by voter ID = "+str(log[0]))
+        connection.send("Successful".encode())
+    else:
+        print("Vote Update Failed by voter ID = "+str(log[0]))
+        connection.send("Vote Update Failed".encode())
+                                                                        #5
+
+    lock.release()
+    connection.close()
 
 
 def voting_Server():
 
     serversocket = socket.socket()
-    host = "127.0.0.1"
+    host = socket.gethostname()
     port = 4001
 
     ThreadCount = 0
@@ -82,12 +72,11 @@ def voting_Server():
 
         print('Connected to :', address)
 
+        client.send("Connection Established".encode())   ### 1
         t = Thread(target = client_thread,args = (client,))
         t.start()
         ThreadCount+=1
-        # break
-
-    serversocket.close()
+        serversocket.close()
 
 if __name__ == '__main__':
     voting_Server()

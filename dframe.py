@@ -23,10 +23,6 @@ def reset_voter_list():
     df=df[['voter_id','Name','Gender','Zone','City','Passw','hasVoted']]
     df.to_csv(path/'voterList.csv')
 
-# def reset_cand_list():
-#     df = pd.DataFrame(columns=['Sign','Name','Vote Count'])
-#     df=df[['Sign','Name','Vote Count']]
-#     df.to_csv(path/'cand_list.csv')
 
 
 def verify(vid,passw):
@@ -42,24 +38,28 @@ def isEligible(vid):
     return not match.empty
 
 
-def vote_update(st,vid):
-    if isEligible(vid):
-        df=pd.read_csv (path/'cand_list.csv')
-        df=df[['Sign','Name','Vote Count']]
-        for index, row in df.iterrows():
-            if df.loc[index, 'Sign'] == st:
-                df.loc[index, 'Vote Count'] += 1
-        df.to_csv (path/'cand_list.csv')
+def vote_update(st, vid):
+    print(f"Vote triggered for voter ID: {vid}, candidate symbol: {st}")
 
-        df=pd.read_csv(path/'voterList.csv')
-        df=df[['voter_id','Name','Gender','Zone','City','Passw','hasVoted']]
-        for index, row in df.iterrows():
-            if df.loc[index, 'voter_id'] == vid:
-                df.loc[index, 'hasVoted'] = 1
-        df.to_csv(path/'voterList.csv')
+    if not isEligible(vid):
+        return False
 
-        return True
-    return False
+    df_cand = pd.read_csv(path/'cand_list.csv')
+    if st not in df_cand['Sign'].values:
+        return False  
+
+    # Update vote count
+    df_cand['Vote Count'] = df_cand.apply(
+        lambda row: row['Vote Count'] + 1 if row['Sign'] == st else row['Vote Count'], axis=1
+    )
+    df_cand.to_csv(path/'cand_list.csv', index=False)
+
+    # Update voter record
+    df_voter = pd.read_csv(path/'voterList.csv')
+    df_voter.loc[df_voter['voter_id'] == vid, 'hasVoted'] = 1
+    df_voter.to_csv(path/'voterList.csv', index=False)
+
+    return True
 
 
 def show_result():

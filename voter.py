@@ -5,16 +5,19 @@ from VotingPage import votingPg
 from PIL import Image,ImageTk
 
 def establish_connection():
-    host = socket.gethostname()
+    host =socket.gethostname()  # ✅ Use localhost directly
     port = 4001
-    client_socket = socket.socket(socket.AF_INET,socket.SOCK_STREAM)
-    client_socket.connect((host, port))
-    print(client_socket)
-    message = client_socket.recv(1024)      #connection establishment message   #1
-    if(message.decode()=="Connection Established"):
-        return client_socket
-    else:
-        return 'Failed'
+    try:
+        client_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+        client_socket.connect((host, port))
+        msg = client_socket.recv(1024).decode()
+        if msg == "Connection Established":
+            return client_socket
+        else:
+            return 'Fail'
+    except Exception as e:
+        print("Connection failed:", e)
+        return 'Fail'
 
 
 def failed_return(root,frame1,client_socket,message):
@@ -55,7 +58,7 @@ def log_server(root,frame1,client_socket,voter_ID,password):
 def voterLogin(root,frame1):
 
     client_socket = establish_connection()
-    if(client_socket == 'Failed'):
+    if(client_socket == 'Fail'):
         message = "Connection failed"
         failed_return(root,frame1,client_socket,message)
 
