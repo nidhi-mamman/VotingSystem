@@ -1,79 +1,100 @@
-import tkinter as tk
-import dframe as df
-from tkinter import *
+import ttkbootstrap as tb
+from ttkbootstrap.constants import *
 from tkinter import messagebox
-from dframe import *
-from PIL import ImageTk,Image
+from PIL import Image, ImageTk
+import dframe as df
+from ttkbootstrap.widgets import Meter, Progressbar
+from ttkbootstrap.constants import INFO, SUCCESS, WARNING, DANGER, PRIMARY
 
+def resetAll(root, frame1):
+    current_data = df.show_result()
+    
+    # Check if all values are already 0
+    if all(v == 0 for v in current_data.values()):
+        msg = tb.Label(frame1, text="⚠️ Data is already reset.", font=('Tahoma', 12, 'bold'),
+                       bootstyle="warning", background="#e2e3e5")
+        msg.pack(pady=(10, 5))
 
-def resetAll(root,frame1):
+        def clear_msg():
+            msg.destroy()
+
+        root.after(1500, clear_msg)
+        return
+    
     answer = messagebox.askyesno("Confirm Reset", "Are you sure you want to reset all data?")
     if answer:
         df.count_reset()
         df.reset_voter_list()
-        def show_msg():
-            Label(frame1, text="", bg="#dad7cd").grid(row=10, column=0)
-            msg = Message(frame1, text="Reset Complete", font=('Tahoma', 12, 'bold'), fg="green", bg="#dad7cd", width=500)
-            msg.grid(row=11, column=0, columnspan=5)
-    
-            def clear_msg():
-                msg.destroy()
 
-            root.after(1500, clear_msg)  
-        show_msg()
+        msg = tb.Label(frame1, text="✅ Reset Complete", font=('Tahoma', 12, 'bold'), bootstyle="success",background="#e2e3e5")
+        msg.pack(pady=(10, 5))
 
 
-def showVotes(root,frame1):
+        def clear_msg():
+            msg.destroy()
 
-    result = df.show_result()
-    root.title("Votes")
-    root.config(bg="#dad7cd")
-    for widget in frame1.winfo_children():
+        root.after(1500, clear_msg)
+
+def showVotes(root, main_container):
+
+    # Clear main container
+    for widget in main_container.winfo_children():
         widget.destroy()
 
-    Label(frame1, text="🗳️ Vote Count",bg="#dad7cd", font=('Tahoma', 20, 'bold')).grid(row = 0, column = 1, rowspan=1)
-    Label(frame1, text="",bg="#dad7cd").grid(row = 1,column = 0)
+    main_container.configure(style="Gray.TFrame")
+    result = df.show_result()
+    root.title("Vote Count")
 
-    vote = StringVar(frame1,"-1")
+    # Total votes to calculate percentages
+    total_votes = sum(result.values()) or 1  # Avoid divide by zero, but ensure it's not 0
 
-    bjpLogo = ImageTk.PhotoImage((Image.open("img/bjp.png")).resize((35,35),Image.Resampling.LANCZOS))
-    bjpImg = Label(frame1,bg="#dad7cd", image=bjpLogo).grid(row = 2,column = 0)
+    # Heading
+    tb.Label(
+        main_container,
+        text="🗳️ Vote Count",
+        font=('Tahoma', 20, 'bold'),
+        background="#e2e3e5"
+    ).pack(pady=(20, 10))
 
-    congLogo = ImageTk.PhotoImage((Image.open("img/cong.png")).resize((25,38),Image.Resampling.LANCZOS))
-    congImg = Label(frame1,bg="#dad7cd", image=congLogo).grid(row = 3,column = 0)
-
-    aapLogo = ImageTk.PhotoImage((Image.open("img/aap.png")).resize((45,30),Image.Resampling.LANCZOS))
-    aapImg = Label(frame1,bg="#dad7cd", image=aapLogo).grid(row = 4,column = 0)
-
-    ssLogo = ImageTk.PhotoImage((Image.open("img/ss.png")).resize((40,35),Image.Resampling.LANCZOS))
-    ssImg = Label(frame1,bg="#dad7cd", image=ssLogo).grid(row = 5,column = 0)
-
-    notaLogo = ImageTk.PhotoImage((Image.open("img/nota.png")).resize((35,25),Image.Resampling.LANCZOS))
-    notaImg = Label(frame1,bg="#dad7cd", image=notaLogo).grid(row = 6,column = 0)
-
-
-    Label(frame1, text="BJP              :       ", font=('Tahoma', 12, 'bold'),bg="#dad7cd").grid(row = 2, column = 1)
-    Label(frame1, text=result['bjp'], font=('Tahoma', 12, 'bold'),bg="#dad7cd").grid(row = 2, column = 2)
-
-    Label(frame1, text=" Cong             :          ", font=('Tahoma', 12, 'bold'),bg="#dad7cd").grid(row = 3, column = 1)
-    Label(frame1, text=result['cong'], font=('Tahoma', 12, 'bold'),bg="#dad7cd").grid(row = 3, column = 2)
-
-    Label(frame1, text=" AAP               :          ", font=('Tahoma', 12, 'bold'),bg="#dad7cd").grid(row = 4, column = 1)
-    Label(frame1, text=result['aap'], font=('Tahoma', 12, 'bold'),bg="#dad7cd").grid(row = 4, column = 2)
-
-    Label(frame1, text=" Shiv Sena    :          ", font=('Tahoma', 12, 'bold'),bg="#dad7cd").grid(row = 5, column = 1)
-    Label(frame1, text=result['ss'], font=('Tahoma', 12, 'bold'),bg="#dad7cd").grid(row = 5, column = 2)
-
-    Label(frame1, text=" NOTA            :          ", font=('Tahoma', 12, 'bold'),bg="#dad7cd").grid(row = 6, column = 1)
-    Label(frame1, text=result['nota'], font=('Tahoma', 12, 'bold'),bg="#dad7cd").grid(row = 6, column = 2)
-
+    # White form
+    frame1 = tb.Frame(main_container, style="White.TFrame",borderwidth=2,
+    relief="solid", padding=20)
     frame1.pack()
+
+    parties = [
+        ("BJP", "img/bjp.png", result.get('bjp', 0), (35, 35), "warning"),   # orange
+        ("Congress", "img/cong.png", result.get('cong', 0), (25, 38), "primary"),  # blue
+        ("AAP", "img/aap.png", result.get('aap', 0), (45, 30), "info"),      # teal
+        ("Shiv Sena", "img/ss.png", result.get('ss', 0), (40, 35), "danger"), # red
+        ("NOTA", "img/nota.png", result.get('nota', 0), (35, 25), "secondary"), # grey
+    ]
+
+    images = []
+
+    for i, (name, path, count, size, color) in enumerate(parties):
+        img = Image.open(path).resize(size, Image.Resampling.LANCZOS)
+        logo = ImageTk.PhotoImage(img)
+        images.append(logo)
+
+        tb.Label(frame1, image=logo, background="white").grid(row=i*2, column=0, padx=10, pady=(10, 0), rowspan=2)
+        tb.Label(frame1, text=f"{name}:", font=('Tahoma', 11, 'bold'), background="white").grid(row=i*2, column=1, sticky="w", pady=5)
+        tb.Label(frame1, text=str(count), font=('Tahoma', 11), background="white").grid(row=i*2, column=2, sticky="e", pady=5)
+
+        # Safeguard against 0% showing up as full (if there are no votes)
+        percent = int((count / total_votes) * 100) if total_votes > 0 else 0
+
+        pb = Progressbar(frame1, bootstyle=color, length=200, value=percent, maximum=100)
+        pb.grid(row=i*2+1, column=1, columnspan=2, pady=(0, 10), sticky="we")
+
+    frame1.pack(padx=20, pady=20)
     root.mainloop()
 
 
+# Main
 if __name__ == "__main__":
-        root = Tk()
-        root.geometry('500x500')
-        root.config(bg="#dad7cd",relief=GROOVE)
-        frame1 = Frame(root)
-        showVotes(root,frame1)
+    root = tb.Window()
+    root.config(background="#e2e3e5")
+    root.geometry('500x500')
+    frame1 = tb.Frame(root, padding=10)
+    frame1.pack(fill=BOTH, expand=True)
+    showVotes(root, frame1)

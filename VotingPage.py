@@ -1,77 +1,101 @@
-import tkinter as tk
-import socket
-from tkinter import *
+import ttkbootstrap as tb
+from ttkbootstrap.constants import *
 from tkinter import messagebox
-from PIL import ImageTk,Image
+from PIL import Image, ImageTk
+import socket
 
-def voteCast(root,frame1,vote,client_socket):
-
-    for widget in frame1.winfo_children():
+def voteCast(main_container, vote, client_socket):
+    for widget in main_container.winfo_children():
         widget.destroy()
 
-    client_socket.send(vote.encode()) #4
+    client_socket.send(vote.encode())
+    message = client_socket.recv(1024).decode()
 
-    message = client_socket.recv(1024) #Success message
-    print(message.decode()) #5
-    message = message.decode()
-    if(message=="Successful"):
-        Label(frame1, text="Vote Casted Successfully",bg="#dad7cd", font=('Tahoma', 20, 'bold')).grid(row = 1, column = 1)
-    else:
-        Label(frame1, text="Vote Cast Failed... \nTry again",bg="#dad7cd", font=('Tahoma', 20, 'bold')).grid(row = 1, column = 1)
+    status = "✅ Vote Casted Successfully" if message == "Successful" else "❌ Vote Cast Failed... Try Again"
+    style = "success" if message == "Successful" else "danger"
 
+    tb.Label(main_container, text=status, font=("Tahoma", 16, "bold"), bootstyle=style, background="#e2e3e5").pack(pady=40)
     client_socket.close()
-    
-    
-def confirm_vote(root, frame1, vote, client_socket):
+
+
+def confirm_vote(main_container, vote, client_socket):
     answer = messagebox.askyesno("Confirm Vote", f"Are you sure you want to vote for {vote.upper()}?")
     if answer:
-        voteCast(root, frame1, vote, client_socket)
+        voteCast(main_container, vote, client_socket)
 
 
-
-def votingPg(root,frame1,client_socket):
-
-    root.title("Cast Vote")
-    root.config(bg="#dad7cd")
-    for widget in frame1.winfo_children():
+def votingPg(root, main_container, client_socket):
+    # Clear screen
+    for widget in main_container.winfo_children():
         widget.destroy()
 
-    Label(frame1, text="Cast Vote", font=('tahoma', 20, 'bold'),bg="#dad7cd").grid(row = 0, column = 1, rowspan=1)
-    Label(frame1, text="",bg="#dad7cd").grid(row = 1,column = 0)
+    root.title("Cast Your Vote")
+    root.configure(background="#e2e3e5")
 
-    vote = StringVar(frame1,"-1")
+    tb.Label(main_container, text="🗳️ Cast Your Vote", font=("Tahoma", 20, "bold"), background="#e2e3e5").pack(pady=20)
 
-    Radiobutton(frame1, text = "BJP\n\nNarendra Modi", variable = vote, value = "bjp", indicator = 0, height = 4, width=15, command = lambda: confirm_vote(root,frame1,"bjp",client_socket)).grid(row = 2,column = 1)
-    bjpLogo = ImageTk.PhotoImage((Image.open("img/bjp.png")).resize((45,45),Image.Resampling.LANCZOS))
-    bjpImg = Label(frame1, image=bjpLogo).grid(row = 2,column = 0)
+    vote = tb.StringVar(main_container, "-1")
 
-    Radiobutton(frame1, text = "Congress\n\nRahul Gandhi", variable = vote, value = "cong", indicator = 0, height = 4, width=15, command = lambda: confirm_vote(root,frame1,"cong",client_socket)).grid(row = 3,column = 1)
-    congLogo = ImageTk.PhotoImage((Image.open("img/cong.png")).resize((35,48),Image.Resampling.LANCZOS))
-    congImg = Label(frame1, image=congLogo).grid(row = 3,column = 0)
+    # Outer white bordered frame
+    vote_frame = tb.Frame(main_container, style="White.TFrame", borderwidth=2, relief="solid", padding=20)
+    vote_frame.pack(pady=10)
 
-    Radiobutton(frame1, text = "Aam Aadmi Party\n\nArvind Kejriwal", variable = vote, value = "aap", indicator = 0, height = 4, width=15, command = lambda: confirm_vote(root,frame1,"aap",client_socket) ).grid(row = 4,column = 1)
-    aapLogo = ImageTk.PhotoImage((Image.open("img/aap.png")).resize((55,40),Image.Resampling.LANCZOS))
-    aapImg = Label(frame1, image=aapLogo).grid(row = 4,column = 0)
+    # Candidate info
+    candidates = [
+        ("BJP", "Narendra Modi", "img/bjp.png", "bjp", (45, 45), "warning"),
+        ("Congress", "Rahul Gandhi", "img/cong.png", "cong", (35, 48), "primary"),
+        ("AAP", "Arvind Kejriwal", "img/aap.png", "aap", (55, 40), "info"),
+        ("Shiv Sena", "Uddhav Thackeray", "img/ss.png", "ss", (50, 45), "danger"),
+        ("NOTA", "", "img/nota.png", "nota", (45, 35), "secondary")
+    ]
 
-    Radiobutton(frame1, text = "Shiv Sena\n\nUdhav Thakrey", variable = vote, value = "ss", indicator = 0, height = 4, width=15, command = lambda: confirm_vote(root,frame1,"ss",client_socket)).grid(row = 5,column = 1)
-    ssLogo = ImageTk.PhotoImage((Image.open("img/ss.png")).resize((50,45),Image.Resampling.LANCZOS))
-    ssImg = Label(frame1, image=ssLogo).grid(row = 5,column = 0)
+    images = []
 
-    Radiobutton(frame1, text = "\nNOTA    \n  ", variable = vote, value = "nota", indicator = 0, height = 4, width=15, command = lambda: confirm_vote(root,frame1,"nota",client_socket)).grid(row = 6,column = 1)
-    notaLogo = ImageTk.PhotoImage((Image.open("img/nota.png")).resize((45,35),Image.Resampling.LANCZOS))
-    notaImg = Label(frame1, image=notaLogo).grid(row = 6,column = 0)
-    
-   
+    for i, (party, leader, img_path, value, size, color) in enumerate(candidates):
+        frame = tb.Frame(vote_frame, style="White.TFrame")
+        frame.pack(pady=10, fill=X)
 
-    frame1.pack()
+        img = Image.open(img_path).resize(size, Image.Resampling.LANCZOS)
+        photo = ImageTk.PhotoImage(img)
+        images.append(photo)
+
+        tb.Label(frame, image=photo, background="white").pack(side=LEFT, padx=(0, 10), anchor=W)
+
+        label_text = f"{party}\n{leader}" if leader else party
+
+
+        tb.Radiobutton(
+            frame,
+            text=label_text,
+            variable=vote,
+            value=value,
+            bootstyle=f"{color}-toolbutton",
+            command=lambda v=value: confirm_vote(main_container, v, client_socket),
+            width=30
+        ).pack(side=LEFT, padx=10)
+
+    main_container.place(relx=0.5, rely=0.5, anchor="center")
+
     root.mainloop()
 
-
 if __name__ == "__main__":
-        root = Tk()
-        root.geometry('600x600')
-        root.resizable(False,False)
-        root.config(bg="#dad7cd",relief=GROOVE)
-        frame1 = Frame(root)
-        client_socket='Fail'
-        votingPg(root,frame1,client_socket)
+    root = tb.Window()
+    root.geometry("600x600")
+    root.config(background="#e2e3e5")
+
+    main_container = tb.Frame(root, padding=10)
+    main_container.place(relx=0.5, rely=0.5, anchor="center")
+
+
+    try:
+        client_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+        serversocket = socket.socket()
+        host = socket.gethostname()
+        port = 4001
+        client_socket.connect((host,port)) 
+    except:
+        client_socket = None
+        messagebox.showerror("Connection Error", "Failed to connect to server.")
+
+    if client_socket:
+        votingPg(root, main_container, client_socket)

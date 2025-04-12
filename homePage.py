@@ -1,85 +1,99 @@
 import os
 import subprocess as sb_p
-import tkinter as tk
-from tkinter import *
+import ttkbootstrap as tb
+from ttkbootstrap.constants import *
 from Admin import AdmLogin
 from voter import voterLogin
-from PIL import Image,ImageTk
+from PIL import Image, ImageTk
 from tkinter import messagebox
 
 
-def Home(root, frame1, frame2,_image, _admin, _voter ):
+def Home(root, main_container, topbar_frame, _home):
+    for widget in main_container.winfo_children():
+        widget.destroy()
 
-    for frame in root.winfo_children():
-        for widget in frame.winfo_children():
-            widget.destroy()
+    style = tb.Style()
+    style.configure("Custom.TButton",
+                    background="#e2e3e5",
+                    foreground="grey",
+                    relief="flat",
+                    borderwidth=0)
+    style.map("Custom.TButton",
+              background=[("active", "#d6d7d9"), ("pressed", "#c5c6c8")])
 
-    Button(frame2,image=_image, text="Home", bg="#dad7cd", width=50,height=50,bd=0,command = lambda: Home(root, frame1, frame2,_image, _admin, _voter )).grid(row=0,column=0)
-    Label(frame2,bg="#dad7cd", text="                                                                         ").grid(row = 0,column = 1)
-    Label(frame2,bg="#dad7cd", text="                                                                         ").grid(row = 0,column = 2)
-    Label(frame2,bg="#dad7cd", text="         ").grid(row = 1,column = 1)
-    frame2.pack(side=TOP)
+    for widget in topbar_frame.winfo_children():
+        widget.destroy()
 
+    tb.Button(
+        topbar_frame, text="Home", image=_home, style="Custom.TButton",
+        command=lambda: Home(root, main_container, topbar_frame, _home)
+    ).pack(anchor='nw', padx=10, pady=10)
+
+    topbar_frame.pack(side=TOP, fill=X)
     root.title("Home")
 
-    Label(frame1, text="Vote. Influence. Inspire.",bg="#dad7cd", font=('Tahoma', 20, 'bold')).grid(row = 0, column = 1, rowspan=1)
-    Label(frame1, text="",bg="#dad7cd").grid(row = 1,column = 0)
+    label = tb.Label(main_container, text="Vote. Influence. Inspire.", font=('Tahoma', 16, 'bold'), background="#e2e3e5")
+    label.pack(pady=(0, 10))
 
-    # Voter Login - wrapped with error handling
+    frame1 = tb.Frame(main_container, style="White.TFrame", padding=30, relief="solid", borderwidth=1)
+    frame1.pack()
+
     def safe_voter_login():
         try:
-            voterLogin(root, frame1)
+            voterLogin(root, main_container)
         except Exception as e:
             messagebox.showerror("Server Error", "Server not running! Please start the server and try again.")
-    
-    #Admin Login
-    admin = Button(frame1,image= _admin, text="  Admin Login",font=('Tahoma', 12, 'bold'),compound="left",bg="#d6ccc2", width=175,height=50, command = lambda: AdmLogin(root, frame1))
 
-    admin.grid(ipady=5)
+    admin = tb.Button(
+        frame1, text="  Admin Login", compound="left",
+        bootstyle=PRIMARY, width=20,
+        command=lambda: AdmLogin(root, main_container, topbar_frame, Home, _home)
+    )
 
-    #Voter Login
-    voter = Button(frame1,image= _voter , text="  Voter Login", font=('Tahoma', 12, 'bold'),compound="left",bg="#d6ccc2", width=175,height=50, command =safe_voter_login)
-    voter.grid(ipady=5)
-    #New Tab
-    newTab = Button(frame1, text="New Window",font=('Tahoma', 12, 'bold'),bg="#d6ccc2", width=16,height=2, command = lambda: sb_p.call('start python homePage.py', shell=True))
+    voter = tb.Button(
+        frame1, text="  Voter Login", compound="left",
+        bootstyle=SUCCESS, width=20, command=safe_voter_login
+    )
 
-    Label(frame1, text="",bg="#dad7cd",).grid(row = 2,column = 0)
-    Label(frame1, text="",bg="#dad7cd",).grid(row = 4,column = 0)
-    Label(frame1, text="",bg="#dad7cd",).grid(row = 6,column = 0)
-    admin.grid(row = 3, column = 1, columnspan = 2)
-    voter.grid(row = 5, column = 1, columnspan = 2)
-    newTab.grid(row = 7, column = 1, columnspan = 2)
+    newTab = tb.Button(
+        frame1, text="New Window", bootstyle=WARNING, width=20,
+        command=lambda: sb_p.call('start python homePage.py', shell=True)
+    )
 
-    frame1.pack()
-    root.mainloop()
-    
+    admin.grid(row=1, column=1, pady=10)
+    voter.grid(row=2, column=1, pady=10)
+    newTab.grid(row=3, column=1, pady=10)
+
+
 
 def new_home():
-    root = Tk()
-    root.geometry("500x500")
-    root.resizable(False, False)  
-    root.config(bg="#dad7cd",relief=GROOVE)
-    #home icon
-    image = Image.open('img/home.png')
-    image__=image.resize((40,40))
-    _image = ImageTk.PhotoImage(image__)
-    #admin button image``
-    admin = Image.open('img/admin1.png')
-    admin__=admin.resize((45,45))
-    _admin = ImageTk.PhotoImage(admin__)
-    #voter button image
-    voter = Image.open('img/voter.png')
-    voter__=voter.resize((50,50))
-    _voter = ImageTk.PhotoImage(voter__)
-    
-    frame1 = Frame(root,bg="#dad7cd")
-    frame2 = Frame(root,bg="#dad7cd")
- 
-    Home(root, frame1, frame2,_image, _admin, _voter )
+    root = tb.Window()
+    root.state('zoomed')
+    root.configure(bg="#e2e3e5")
+    root.resizable(False,False)
+
+    style = tb.Style()
+    style.configure("White.TFrame", background="white")
+    style.configure("TopBar.TFrame", background="#e2e3e5")
+    style.configure("Gray.TFrame", background="#e2e3e5")
+
+    # Shared central container
+    main_container = tb.Frame(root, style="Gray.TFrame")
+    main_container.place(relx=0.5, rely=0.5, anchor="center")
+
+    # Top nav bar
+    frame2 = tb.Frame(root, style="TopBar.TFrame")
+    frame2.pack(side=TOP, fill=X)
+
+    # Load home icon
+    home = Image.open('img/home.png').resize((50, 50))
+    _home = ImageTk.PhotoImage(home)
+
+    # Initialize Home view
+    Home(root, main_container, frame2, _home)
+
+    root.mainloop()
 
 
 if __name__ == "__main__":
     new_home()
-
-
-

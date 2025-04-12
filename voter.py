@@ -1,11 +1,11 @@
-import tkinter as tk
+import ttkbootstrap as tb
+from ttkbootstrap.constants import *
 import socket
-from tkinter import *
-from VotingPage import votingPg
-from PIL import Image,ImageTk
+from PIL import Image, ImageTk
+
 
 def establish_connection():
-    host =socket.gethostname()  # ✅ Use localhost directly
+    host = socket.gethostname()
     port = 4001
     try:
         client_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
@@ -20,112 +20,122 @@ def establish_connection():
         return 'Fail'
 
 
-def failed_return(root,frame1,client_socket,message):
-    for widget in frame1.winfo_children():
+def failed_return(root, main_container, client_socket, message):
+    for widget in main_container.winfo_children():
         widget.destroy()
-    retry_messages = ["Connection failed", "Invalid Voter", "Server Error"]
-    if message in retry_messages:
+    if message in ["Connection failed", "Invalid Voter", "Server Error"]:
         message += "... \nTry again..."
-    Label(frame1, text=message,bg="#dad7cd", font=('Tahoma', 13, 'bold'),fg="green").grid(row = 1, column = 1)
-    client_socket.close()
-    if message.startswith("Vote has Already been Cast"):
-        root.after(1500, lambda: voterLogin(root, frame1))  
+    tb.Label(main_container, text=message, font=('Tahoma', 13, 'bold'), foreground="green", background="#dad7cd").pack(pady=30)
+    try:
+        client_socket.close()
+    except:
+        pass
 
-def log_server(root,frame1,client_socket,voter_ID,password):
+
+def log_server(root, main_container, client_socket, voter_ID, password):
     message = voter_ID + " " + password
-    client_socket.send(message.encode()) #2
+    client_socket.send(message.encode())
 
-    message = client_socket.recv(1024) #Authenticatication message
-    message = message.decode()
+    response = client_socket.recv(1024).decode()
 
-    if(message=="Authenticate"):
-        votingPg(root, frame1, client_socket)
-
-    elif(message=="VoteCasted"):
-        message = "Vote has Already been Cast"
-        failed_return(root,frame1,client_socket,message)
-
-    elif(message=="InvalidVoter"):
-        message = "Invalid Voter"
-        failed_return(root,frame1,client_socket,message)
-
+    if response == "Authenticate":
+        from VotingPage import votingPg
+        votingPg(root, main_container, client_socket)
+    elif response == "VoteCasted":
+        failed_return(root, main_container, client_socket, "Vote has Already been Cast")
+    elif response == "InvalidVoter":
+        failed_return(root, main_container, client_socket, "Invalid Voter")
     else:
-        message = "Server Error"
-        failed_return(root,frame1,client_socket,message)
+        failed_return(root, main_container, client_socket, "Server Error")
 
 
-
-def voterLogin(root,frame1):
-
+def voterLogin(root, main_container):
     client_socket = establish_connection()
-    if(client_socket == 'Fail'):
-        message = "Connection failed"
-        failed_return(root,frame1,client_socket,message)
+    if client_socket == 'Fail':
+        failed_return(root, main_container, None, "Connection failed")
+        return
 
-    root.title("Voter Login")
-    user = Image.open('img/user.png')
-    user__=user.resize((50,50))
-    _user = ImageTk.PhotoImage(user__)
-    
-    # password icon
-    password = Image.open('img/password.png')
-    password__=password.resize((50,50))
-    _password = ImageTk.PhotoImage(password__)
-    
-    def on_entry_click(event):
-       if e1.get() == 'Enter your Voter Id':
-            e1.delete(0, "end")  
-            e1.config(fg='black')
-
-    def on_focusout(event):
-       if e1.get() == '':
-            e1.insert(0, 'Enter your Voter Id')
-            e1.config(fg='gray')
-            
-    def on_entry_click_pass(event):
-       if e3.get() == 'Enter your Password':
-            e3.delete(0, "end")  
-            e3.config(fg='black')
-
-    def on_focusout_pass(event):
-       if e3.get() == '':
-            e3.insert(0, 'Enter your Password')
-            e3.config(fg='gray')
-    
-
-    for widget in frame1.winfo_children():
+    for widget in main_container.winfo_children():
         widget.destroy()
 
-    Label(frame1, text="Voter Login",bg="#dad7cd", font=('Tahoma', 20, 'bold')).grid(row = 0, column = 2, rowspan=1)
-    Label(frame1, text="",bg="#dad7cd").grid(row = 1,column = 0)
-    Label(frame1, text="Voter ID:      ",image=_user, anchor="e",bg="#dad7cd",font=('Tahoma', 10, 'bold'),justify=LEFT).grid(row = 2,column = 0,pady=5)
-    Label(frame1, text="Password:   ",image=_password, anchor="e",bg="#dad7cd",font=('Tahoma', 10, 'bold'), justify=LEFT).grid(row = 3,column = 0,pady=5)
+    main_container.configure(style="Gray.TFrame")
 
-    voter_ID = tk.StringVar()
-    password = tk.StringVar()
+    tb.Label(main_container, text="Voter Login", font=('Tahoma', 20, 'bold'), background="#e2e3e5").pack(pady=(10, 20))
 
-    e1 = Entry(frame1, fg='gray',font=('Tahoma', 10),textvariable=voter_ID)
-    e1.insert(0, 'Enter your Voter Id') 
-    e1.bind('<FocusIn>', on_entry_click)
-    e1.bind('<FocusOut>', on_focusout)
-    e1.grid(row = 2,column = 2,ipadx=25,ipady=6)
-    e3 = Entry(frame1, fg='gray',font=('Tahoma', 10),textvariable=password)
-    e3.insert(0, 'Enter your Password') 
-    e3.bind('<FocusIn>', on_entry_click_pass)
-    e3.bind('<FocusOut>', on_focusout_pass)
-    e3.grid(row = 3,column = 2,ipadx=25,ipady=6)
+    form_frame = tb.Frame(main_container, padding=20, style="White.TFrame")
+    form_frame.pack()
 
-    sub = Button(frame1, text="Login",bg="#d6ccc2",font=('Tahoma', 12, 'bold'), width=12,height=1, command = lambda: log_server(root, frame1, client_socket, voter_ID.get(), password.get()))
-    Label(frame1, text="",bg="#dad7cd").grid(row = 4,column = 0)
-    sub.grid(row = 5, column = 0, columnspan = 5)
+    # Load icons
+    user_icon = Image.open('img/user.png').resize((25, 25))
+    user_icon = ImageTk.PhotoImage(user_icon)
+    pass_icon = Image.open('img/password.png').resize((25, 25))
+    pass_icon = ImageTk.PhotoImage(pass_icon)
 
-    frame1.pack()
-    root.mainloop()
+    # Variables
+    voter_ID = tb.StringVar()
+    password = tb.StringVar()
+
+    def set_placeholder(entry, text, is_password=False):
+        def on_focus_in(event):
+            if entry.get() == text:
+                entry.delete(0, "end")
+                entry.config(foreground="black")
+                if is_password:
+                    entry.config(show="*")
+
+        def on_focus_out(event):
+            if entry.get() == "":
+                entry.insert(0, text)
+                entry.config(foreground="gray")
+                if is_password:
+                    entry.config(show="")
+
+        entry.insert(0, text)
+        entry.config(foreground="gray")
+        entry.bind('<FocusIn>', on_focus_in)
+        entry.bind('<FocusOut>', on_focus_out)
+
+    # Voter ID Entry
+    tb.Label(form_frame, text="Voter ID:", font=('Tahoma', 10, 'bold'), background="white", compound="left").grid(row=0, column=0, pady=10, sticky="w")
+    e1 = tb.Entry(form_frame, textvariable=voter_ID, width=30)
+    e1.grid(row=0, column=1, padx=10)
+    set_placeholder(e1, "Enter your Voter Id")
+
+    # Password Entry
+    tb.Label(form_frame, text="Password:", font=('Tahoma', 10, 'bold'), background="white", compound="left").grid(row=1, column=0, pady=10, sticky="w")
+    e3 = tb.Entry(form_frame, textvariable=password, width=30)
+    e3.grid(row=1, column=1, padx=10)
+    set_placeholder(e3, "Enter your Password", is_password=True)
+    
+    style = tb.Style()
+    style.configure("SuccessHover.TButton", font=('Tahoma', 10))
+    style.map("SuccessHover.TButton",
+              background=[("active", "#3a86ff"), ("!active", "#28a745")],
+              foreground=[("pressed", "white"), ("active", "white")])
+
+    # Login Button
+    tb.Button(
+        form_frame,
+        text="Login",
+        style="SuccessHover.TButton",
+        width=20,
+        command=lambda: log_server(root, main_container, client_socket, voter_ID.get(), password.get())
+    ).grid(row=2, column=0, columnspan=2, pady=20)
 
 
+# Run Test
 if __name__ == "__main__":
-        root = Tk()
-        root.geometry('500x500')
-        root.config(bg="#dad7cd",relief=GROOVE)
-        frame1 = Frame(root)
-        voterLogin(root,frame1)
+    root = tb.Window()
+    root.title("Voter Login")
+    root.geometry("600x450")
+    root.configure(bg="#e2e3e5")
+
+    style = tb.Style()
+    style.configure("White.TFrame", background="white")
+    style.configure("Gray.TFrame", background="#e2e3e5")
+
+    main_container = tb.Frame(root, style="Gray.TFrame")
+    main_container.place(relx=0.5, rely=0.5, anchor="center")
+
+    voterLogin(root, main_container)
+    root.mainloop()

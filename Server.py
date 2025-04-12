@@ -76,7 +76,7 @@ def voting_Server():
         t = Thread(target = client_thread,args = (client,))
         t.start()
         ThreadCount+=1
-        serversocket.close()
+        # serversocket.close()
 
 if __name__ == '__main__':
     voting_Server()

@@ -1,127 +1,170 @@
-import subprocess as sb_p
+import ttkbootstrap as tb
+from ttkbootstrap.constants import *
+from PIL import Image, ImageTk
 import tkinter as tk
+import subprocess as sb_p
 import registerVoter as regV
 import admFunc as adFunc
-from tkinter import *
-from registerVoter import *
-from admFunc import *
 
 
+import ttkbootstrap as tb
+from ttkbootstrap.constants import *
+from PIL import Image, ImageTk
+import tkinter as tk
+import subprocess as sb_p
+import registerVoter as regV
+import admFunc as adFunc
 
-def AdminHome(root,frame1,frame3):
-    
-    root.title("Admin")
-    back = Image.open('img/back.png')
-    back__=back.resize((40,40))
-    _back = ImageTk.PhotoImage(back__)
-    
-
-    
-    for widget in frame1.winfo_children():
-        widget.destroy()
-
-
-    Button(frame3, text="Admin",image= _back,bd=0,bg="#dad7cd", command = lambda: AdminHome(root, frame1, frame3)).grid(row=1,column=0)
-    frame3.pack(side=TOP)
-
-    Label(frame1, text="Admin",bg="#dad7cd", font=('Tahoma', 25, 'bold')).grid(row = 0, column = 1)
-
-    #Admin Login
-    runServer = Button(frame1, text="Run Server",font=('Tahoma', 12, 'bold'),width=15,height=1,bg="#d6ccc2", command = lambda: sb_p.call('start python Server.py', shell=True))
-
-    #Voter Login
-    registerVoter = Button(frame1, text="Register Voter", font=('Tahoma', 12, 'bold'),width=15,height=1,bg="#d6ccc2", command = lambda: regV.Register(root, frame1))
-
-    #Show Votes
-    showVotes = Button(frame1, text="Show Votes", font=('Tahoma', 12, 'bold'),width=15,height=1,bg="#d6ccc2", command = lambda: adFunc.showVotes(root, frame1))
-    
-    #Reset All
-    reset = Button(frame1, text="Reset All", font=('Tahoma', 12, 'bold'),width=15,height=1,bg="#d6ccc2", command = lambda: adFunc.resetAll(root, frame1))
-
-    Label(frame1, text="",bg="#dad7cd").grid(row = 2,column = 0)
-    Label(frame1, text="",bg="#dad7cd").grid(row = 4,column = 0)
-    Label(frame1, text="",bg="#dad7cd").grid(row = 6,column = 0)
-    Label(frame1, text="",bg="#dad7cd").grid(row = 8,column = 0)
-    runServer.grid(row = 3, column = 1, columnspan = 2)
-    registerVoter.grid(row = 5, column = 1, columnspan = 2)
-    showVotes.grid(row = 7, column = 1, columnspan = 2)
-    reset.grid(row = 9, column = 1, columnspan = 2)
-    
-    frame1.pack()
-    root.mainloop()
-
-
-
-def log_admin(root,frame1,admin_ID,password):
-
-    if(admin_ID=="Admin" and password=="admin"):
-        frame3 = root.winfo_children()[1]
-        AdminHome(root, frame1, frame3)
+def log_admin(root, frame1, main_container, admin_ID, password, topbar_frame, home_function, home_icon):
+    if admin_ID == "Admin" and password == "admin":
+        frame1.destroy()
+        AdminHome(root, main_container, topbar_frame, home_function, home_icon)
     else:
-        msg = Message(frame1, text="Either ID or Password is Incorrect",bg="#dad7cd",font=("Tahoma",10,"bold"),fg="red", width=500)
-        msg.grid(row = 6, column = 0, columnspan = 5)
+        msg = tb.Label(main_container, text="Either ID or Password is Incorrect",
+                       bootstyle="danger", font=("Tahoma", 10, "bold"))
+        msg.grid(row=5, column=0, columnspan=2, pady=5)
 
-
-def AdmLogin(root,frame1):
-
+def AdmLogin(root, main_container, topbar_frame, home_function, home_icon):
     root.title("Admin Login")
-    root.config(bg="#dad7cd",relief=GROOVE)
-       # user icon
-    user = Image.open('img/user.png')
-    user__=user.resize((50,50))
-    _user = ImageTk.PhotoImage(user__)
-    
-    # password icon
-    password = Image.open('img/password.png')
-    password__=password.resize((50,50))
-    _password = ImageTk.PhotoImage(password__)
+    root.configure(background="#e2e3e5")
 
-    def on_entry_click(event):
-       if entry.get() == 'Enter your name':
-            entry.delete(0, "end")  
-            entry.config(fg='black')
-
-    def on_focusout(event):
-       if entry.get() == '':
-            entry.insert(0, 'Enter your name')
-            entry.config(fg='gray')
-    
-    def on_entry_click_password(event):
-       if entry1.get() == 'Enter your password':
-            entry1.delete(0, "end")  
-            entry1.config(fg='black')
-
-    def on_focusout_password(event):
-       if entry1.get() == '':
-            entry1.insert(0, 'Enter your password')
-            entry1.config(fg='gray')
-    
-    
-    for widget in frame1.winfo_children():
+    for widget in main_container.winfo_children():
         widget.destroy()
 
-    Label(frame1, text="Admin Login",bg="#dad7cd", font=('Tahoma', 20, 'bold')).grid(row = 0, column = 2, rowspan=1)
-    Label(frame1, text="",bg="#dad7cd").grid(row = 1,column = 0)
-    Label(frame1, text="Admin ID:   " ,image=_user, anchor="e",bg="#dad7cd", justify=LEFT).grid(row = 2,column = 0)
-    Label(frame1, text="Password:   ",image=_password, anchor="e",bg="#dad7cd", justify=LEFT).grid(row = 3,column = 0)
+    container = tb.Frame(main_container, style="Gray.TFrame")
+    container.pack()
 
-    admin_ID = tk.StringVar()
-    password = tk.StringVar()
+    tb.Label(container, text="Admin Login", font=('Tahoma', 20, 'bold'), background="#e2e3e5").pack(pady=(0, 10))
 
-    entry = Entry(frame1, fg='gray',font=('Tahoma', 10),textvariable=admin_ID)
-    entry.insert(0, 'Enter your name') 
-    entry.bind('<FocusIn>', on_entry_click)
-    entry.bind('<FocusOut>', on_focusout)
-    entry.grid(row=2,column=2,ipadx=25,ipady=6)
-    entry1 = Entry(frame1, fg='gray',font=('Tahoma', 10),textvariable=password)
-    entry1.insert(0, 'Enter your password') 
-    entry1.bind('<FocusIn>', on_entry_click_password)
-    entry1.bind('<FocusOut>', on_focusout_password)
-    entry1.grid(row=3,column=2,ipadx=25,ipady=6)
-
-    sub = Button(frame1, text="Login", font=('Tahoma', 12, 'bold'),width=10,height=1,bg="#d6ccc2", command = lambda: log_admin(root, frame1, admin_ID.get(), password.get()))
-    Label(frame1, text="",bg="#dad7cd").grid(row = 0,column = 0)
-    sub.grid(row = 4, column = 1, columnspan = 2,padx=20,pady=20)
-
+    frame1 = tb.Frame(container, style="White.TFrame", padding=30, borderwidth=1, relief="solid")
     frame1.pack()
+
+    user = Image.open('img/user.png').resize((30, 30))
+    password = Image.open('img/password.png').resize((30, 30))
+    _user = ImageTk.PhotoImage(user)
+    _password = ImageTk.PhotoImage(password)
+
+    admin_ID = tb.StringVar()
+    password_val = tb.StringVar()
+
+    def set_placeholder(entry_widget, placeholder_text, is_password=False):
+        def on_focus_in(event):
+            if entry_widget.get() == placeholder_text:
+                entry_widget.delete(0, 'end')
+                entry_widget.config(foreground='black')
+                if is_password:
+                    entry_widget.config(show='*')
+
+        def on_focus_out(event):
+            if entry_widget.get() == '':
+                entry_widget.insert(0, placeholder_text)
+                entry_widget.config(foreground='gray')
+                if is_password:
+                    entry_widget.config(show='')
+
+        entry_widget.insert(0, placeholder_text)
+        entry_widget.config(foreground='gray')
+        entry_widget.bind('<FocusIn>', on_focus_in)
+        entry_widget.bind('<FocusOut>', on_focus_out)
+
+    user_frame = tb.Frame(frame1)
+    user_frame.grid(row=1, column=0, columnspan=2, pady=10)
+    tb.Label(user_frame, image=_user).pack(side="left", padx=5)
+    username_entry = tb.Entry(user_frame, textvariable=admin_ID, font=('Tahoma', 10), width=30, bootstyle="info")
+    username_entry.pack(side="left")
+    set_placeholder(username_entry, 'Enter your name')
+
+    pass_frame = tb.Frame(frame1)
+    pass_frame.grid(row=2, column=0, columnspan=2, pady=10)
+    tb.Label(pass_frame, image=_password).pack(side="left", padx=5)
+    password_entry = tb.Entry(pass_frame, textvariable=password_val, font=('Tahoma', 10), width=30, bootstyle="info")
+    password_entry.pack(side="left")
+    set_placeholder(password_entry, 'Enter your password', is_password=True)
+
+    style = tb.Style()
+    style.configure("SuccessHover.TButton", font=('Tahoma', 10))
+    style.map("SuccessHover.TButton",
+              background=[("active", "#3a86ff"), ("!active", "#28a745")],
+              foreground=[("pressed", "white"), ("active", "white")])
+
+    login_btn = tb.Button(frame1, text="Login", width=20,
+                          style="SuccessHover.TButton",
+                          command=lambda: log_admin(root, frame1, main_container,
+                                                    admin_ID.get(), password_val.get(),
+                                                    topbar_frame, home_function, home_icon))
+    login_btn.grid(row=4, column=0, columnspan=2, pady=20)
+    login_btn.configure(takefocus=0)
+
+    frame1.image_user = _user
+    frame1.image_password = _password
+
+def AdminHome(root, main_container, topbar_frame, home_function, home_icon):
+    root.title("Admin")
+
+    back = Image.open('img/back.png').resize((40, 40))
+    _back = ImageTk.PhotoImage(back)
+
+    for widget in main_container.winfo_children():
+        widget.destroy()
+    for widget in topbar_frame.winfo_children():
+        widget.destroy()
+
+    style = tb.Style()
+    style.configure("Custom.TButton", background="#e2e3e5", foreground="grey", relief="flat", borderwidth=0)
+    style.map("Custom.TButton", background=[("active", "#d6d7d9"), ("pressed", "#c5c6c8")])
+
+    tb.Button(topbar_frame, image=_back, text=" Admin", style="Custom.TButton",
+              command=lambda: AdminHome(root, main_container, topbar_frame, home_function, home_icon)).pack(side="left", padx=10, pady=10)
+    topbar_frame.pack(side="top", fill="x")
+
+    home_label = tb.Label(topbar_frame, text="Go to Homepage",
+                          font=('Tahoma', 10, 'underline'),
+                          cursor="hand2", bootstyle="info",background="#e2e3e5")
+    home_label.pack(side="right", padx=10, pady=10)
+    home_label.bind("<Button-1>", lambda e: home_function(root, main_container, topbar_frame, home_icon))
+
+    header_label = tb.Label(main_container, text="Admin Dashboard", font=('Tahoma', 25, 'bold'), bootstyle="dark", background="#e2e3e5")
+    header_label.pack(pady=(10, 20))
+
+    white_box = tb.Frame(main_container, style="White.TFrame", padding=30, borderwidth=1, relief="solid")
+    white_box.pack()
+
+    tb.Button(white_box, text="Run Server", width=20, bootstyle="primary",
+              command=lambda: sb_p.call('start python Server.py', shell=True))\
+        .grid(row=1, column=0, columnspan=2, pady=5)
+
+    tb.Button(white_box, text="Register Voter", width=20, bootstyle="success",
+              command=lambda: regV.Register(root, main_container))\
+        .grid(row=2, column=0, columnspan=2, pady=5)
+
+    tb.Button(white_box, text="Show Votes", width=20, bootstyle="info",
+              command=lambda: adFunc.showVotes(root, main_container))\
+        .grid(row=3, column=0, columnspan=2, pady=5)
+
+    tb.Button(white_box, text="Reset All", width=20, bootstyle="danger",
+              command=lambda: adFunc.resetAll(root, main_container))\
+        .grid(row=4, column=0, columnspan=2, pady=5)
+
+    topbar_frame._back = _back
+
+
+# Example main starter
+if __name__ == "__main__":
+    root = tb.Window()
+    root.state("zoomed")
+    root.configure(bg="#e2e3e5")
+    root.resizable(False,False)
+
+    # Frame for login form
+    style = tb.Style()
+    style.configure("White.TFrame", background="white")
+
+    frame1 = tb.Frame(root, style="White.TFrame", padding=30)
+    frame1.place(relx=0.5, rely=0.5, anchor="center")
+
+    # Top nav bar (even if blank initially)
+    frame3 = tb.Frame(root, padding=10)
+    frame3.pack(side="top", fill="x")
+
+    AdmLogin(root, frame1)
     root.mainloop()
